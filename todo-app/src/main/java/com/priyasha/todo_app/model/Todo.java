@@ -36,4 +36,9 @@ public class Todo {
     @Column(name = "deadline_date", nullable = false) //Map the field to the db column
     private LocalDate deadlineDate;
 
+    @NotNull(message = "Priority cannot be empty")
+    @Pattern(regexp = "^(P1|P2|P3|P4|P5)$", message = "Priority must be one of P1, P2, P3, P4, or P5")
+    @Column(name = "priority", nullable = false)
+    private String priority;
+
 }
