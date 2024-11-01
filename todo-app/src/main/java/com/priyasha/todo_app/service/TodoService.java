@@ -8,6 +8,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import java.util.Optional;
 @Service
 public class TodoService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TodoService.class);
     private final TodoRepository todoRepository;
     private final ModelMapper modelMapper;
 
@@ -29,6 +32,7 @@ public class TodoService {
 
     //Create new Todo
     public TodoDTO createTodo(TodoDTO todoDTO) {
+        logger.info("Creating a new Todo item with task: {}", todoDTO.getTask());
         try {
             // Map the TodoDTO to Todo entity
             Todo todo = modelMapper.map(todoDTO, Todo.class);
@@ -42,7 +46,7 @@ public class TodoService {
 
     //Update existing Todo
     public TodoDTO updateTodo(Long id, TodoDTO todoDTO) {
-
+        logger.info("Updating Todo item with id: {}", id);
         try {
             Optional<Todo> existingTodo = todoRepository.findById(id);
             if (existingTodo.isPresent()) {
@@ -61,6 +65,7 @@ public class TodoService {
     //Delete Todo
     @Transactional
     public String deleteTodo(Long id) {
+        logger.info("Attempting to delete Todo with id: {}", id);
         try {
             if (todoRepository.existsById(id)) {
                 todoRepository.deleteById(id);
@@ -75,6 +80,8 @@ public class TodoService {
 
     //Get Todo
     public Page<TodoDTO> getTodos(String keyword, String status, String sortBy, String sortDirection, Integer page, Integer size) {
+
+        logger.info("Fetching todos with filter - keyword: {}, status: {}, sortBy: {}, sortDirection: {}", keyword, status, sortBy, sortDirection);
 
         // Default values for pagination
         int defaultPage = 0; // Default page number
