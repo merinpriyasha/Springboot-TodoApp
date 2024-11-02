@@ -39,6 +39,7 @@ public class TodoService {
             // Save the entity and map the saved entity back to TodoDTO for return
             return modelMapper.map(todoRepository.save(todo), TodoDTO.class);
         } catch (Exception e) {
+            logger.error("Failed to create todo item", e);
             throw new RuntimeException("Failed to create todo item", e);
         }
 
@@ -51,14 +52,24 @@ public class TodoService {
             Optional<Todo> existingTodo = todoRepository.findById(id);
             if (existingTodo.isPresent()) {
                 Todo todoToUpdate = existingTodo.get();
-                modelMapper.map(todoDTO, todoToUpdate); // Update fields of existingTodo with fields from todoDTO
+
+                // Manually set fields instead of mapping the whole DTO
+                todoToUpdate.setTask(todoDTO.getTask());
+                todoToUpdate.setStatus(todoDTO.getStatus());
+                todoToUpdate.setDeadlineDate(todoDTO.getDeadlineDate());
+                todoToUpdate.setPriority(todoDTO.getPriority());
+
                 return modelMapper.map(todoRepository.save(todoToUpdate), TodoDTO.class);
             } else {
+                logger.warn("Todo with id {} not found for update", id);
                 throw new EntityNotFoundException("Todo with id" + id + "not found");
             }
 
+        } catch (EntityNotFoundException e) {
+            throw e; // Can be caught by a specific exception handler if defined in the controller
         } catch (Exception e) {
-            throw new RuntimeException("Failed to update todo item", e);
+            logger.error("Failed to update todo item with id {}: {}", id, e.getMessage());
+            throw new RuntimeException("Failed to update todo item with id " + id, e);
         }
     }
 
@@ -71,9 +82,11 @@ public class TodoService {
                 todoRepository.deleteById(id);
                 return "Todo with id " + id + " was successfully deleted.";
             } else {
+                logger.warn("Todo with id {} not found for delete", id);
                 throw new EntityNotFoundException("Todo with id " + id + "not found");
             }
         } catch (Exception e) {
+            logger.error("Failed to delete todo item with id {}: {}", id, e.getMessage());
             throw new RuntimeException("Failed to delete todo item", e);
         }
     }
@@ -123,6 +136,7 @@ public class TodoService {
             }.getType());
             return new PageImpl<>(todoDTOS, pageable, todoPage.getTotalElements());
         } catch (Exception e) {
+            logger.error("Failed to get todo items", e);
             throw new RuntimeException("Failed to retrieve todos", e);
         }
 

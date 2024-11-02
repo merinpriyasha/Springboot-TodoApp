@@ -1,5 +1,6 @@
 package com.priyasha.todo_app.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -33,6 +34,7 @@ public class Todo {
 
     @NotNull(message = "Deadline date cannot be null")
     @Future(message = "Deadline date must be in the future")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
     @Column(name = "deadline_date", nullable = false) //Map the field to the db column
     private LocalDate deadlineDate;
 

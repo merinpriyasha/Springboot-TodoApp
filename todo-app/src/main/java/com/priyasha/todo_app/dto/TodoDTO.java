@@ -1,5 +1,6 @@
 package com.priyasha.todo_app.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -29,6 +30,7 @@ public class TodoDTO {
 
     @NotNull(message = "Deadline date cannot be null")
     @Future(message = "Deadline date must be in the future")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
     private LocalDate deadlineDate = LocalDate.now().plusDays(1); // sets the default value of deadlineDate to the next day from the current
 
     @NotNull(message = "Priority cannot be empty")
