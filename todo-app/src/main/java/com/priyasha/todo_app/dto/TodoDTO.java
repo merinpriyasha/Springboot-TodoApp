@@ -30,8 +30,8 @@ public class TodoDTO {
 
     @NotNull(message = "Deadline date cannot be null")
     @Future(message = "Deadline date must be in the future")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
-    private LocalDate deadlineDate = LocalDate.now().plusDays(1); // sets the default value of deadlineDate to the next day from the current
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate deadlineDate ;
 
     @NotNull(message = "Priority cannot be empty")
     @Pattern(regexp = "^(P1|P2|P3|P4|P5)$", message = "Priority must be one of P1, P2, P3, P4, or P5")

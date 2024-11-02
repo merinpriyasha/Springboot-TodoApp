@@ -6,6 +6,7 @@ import com.priyasha.todo_app.model.Todo;
 import com.priyasha.todo_app.repository.TodoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.hibernate.mapping.Collection;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -134,7 +136,7 @@ public class TodoService {
 
             List<TodoDTO> todoDTOS = modelMapper.map(todoPage.getContent(), new TypeToken<List<TodoDTO>>() {
             }.getType());
-            return new PageImpl<>(todoDTOS, pageable, todoPage.getTotalElements());
+            return new PageImpl<>(todoDTOS != null ? todoDTOS : Collections.emptyList(), pageable, todoPage.getTotalElements());
         } catch (Exception e) {
             logger.error("Failed to get todo items", e);
             throw new RuntimeException("Failed to retrieve todos", e);

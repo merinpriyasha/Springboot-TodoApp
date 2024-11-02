@@ -34,7 +34,7 @@ public class Todo {
 
     @NotNull(message = "Deadline date cannot be null")
     @Future(message = "Deadline date must be in the future")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @Column(name = "deadline_date", nullable = false) //Map the field to the db column
     private LocalDate deadlineDate;
 
