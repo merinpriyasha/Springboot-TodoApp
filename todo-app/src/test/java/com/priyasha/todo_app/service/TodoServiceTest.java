@@ -2,11 +2,15 @@ package com.priyasha.todo_app.service;
 
 import com.priyasha.todo_app.dto.TodoDTO;
 import com.priyasha.todo_app.model.Todo;
+import com.priyasha.todo_app.model.User;
 import com.priyasha.todo_app.repository.TodoRepository;
+import com.priyasha.todo_app.repository.UserRepository;
+import com.priyasha.todo_app.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.*;
@@ -28,78 +32,161 @@ public class TodoServiceTest {
     @Mock
     private ModelMapper modelMapper;
 
+    @Mock
+    private JwtUtil jwtUtil;
+
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private TodoService todoService;
 
+
     @Test
     public void testCreateTodo(){
-        TodoDTO todoDTO = new TodoDTO(1L, "New Task", "pending", LocalDate.now().plusDays(1), "P1");
-        Todo todo = new Todo();
 
-        // When the ModelMapper and repository save are mocked to simulate expected behavior
-        when(modelMapper.map(todoDTO, Todo.class)).thenReturn(todo);
-        when(todoRepository.save(todo)).thenReturn(todo);
-        when(modelMapper.map(todo, TodoDTO.class)).thenReturn(todoDTO);
+        String token = "valid-jwt-token";
+        Long userId = 123L;
 
-        // When the service method is called
-        TodoDTO result = todoService.createTodo(todoDTO);
+        // Define the input DTO and expected entity
+        TodoDTO inputTodoDTO = new TodoDTO(null, "New Task", "pending", LocalDate.now().plusDays(1), "P1");
 
-        assertEquals("New Task", result.getTask(), "Task should be match the input value");
-        assertEquals("pending", result.getStatus(), "Status should be 'pending' ");
-        assertEquals(LocalDate.now().plusDays(1), result.getDeadlineDate(), "Deadline date should match the input value");
-        assertEquals("P1", result.getPriority(), "Priority should be 'P1'");
+        // Create a User instance with the userId
+        User user = new User();
+        user.setId(userId);
+
+        // Mock the methods used within the createTodo method
+        when(jwtUtil.extractUserId(token)).thenReturn(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // Mock the mapping of DTO to entity and back to DTO
+        Todo todo = new Todo(null, "New Task", "pending", LocalDate.now().plusDays(1), "P1", user);
+        when(modelMapper.map(inputTodoDTO, Todo.class)).thenReturn(todo);
+
+        // Mock the save operation on repository and the mapping back to DTO
+        Todo savedTodo = new Todo(1L, "New Task", "pending", LocalDate.now().plusDays(1), "P1", user);
+        when(todoRepository.save(todo)).thenReturn(savedTodo);
+        when(modelMapper.map(savedTodo, TodoDTO.class)).thenReturn(new TodoDTO(1L, "New Task", "pending", LocalDate.now().plusDays(1), "P1"));
+
+        // Execute the method and assert results
+        TodoDTO result = todoService.createTodo(inputTodoDTO, token);
+
+        // Assertions to verify the creation
+        assertNotNull(result);
+        assertEquals("New Task", result.getTask());
+        assertEquals("pending", result.getStatus());
+        assertEquals("P1", result.getPriority());
+        assertEquals(1L, result.getId());
 
     }
 
     @Test
     public void testUpdateTodo(){
+
         Long id = 1L;
-        TodoDTO todoDTO = new TodoDTO(null,"Updated Task", "completed", LocalDate.now().plusDays(2), "P2");
-        Todo todo= new Todo();
+        String token = "valid-jwt-token";
+        Long userId = 123L;
 
-        Optional<Todo> optionalTodo = Optional.of(todo);
+        // Prepare the TodoDTO input and the existing Todo entity
+        TodoDTO todoDTO = new TodoDTO(null, "Updated Task", "completed", LocalDate.now().plusDays(2), "P2");
 
-        when(todoRepository.findById(id)).thenReturn(optionalTodo);
-        when(todoRepository.save(todo)).thenReturn(todo);
-        when(modelMapper.map(todo, TodoDTO.class)).thenReturn(todoDTO);
+        // Create a User instance and set the userId
+        User mockUser = new User();
+        mockUser.setId(userId);
 
-        TodoDTO result = todoService.updateTodo(id, todoDTO);
+        // Prepare the existing Todo entity with the user
+        Todo existingTodo = new Todo();
+        existingTodo.setUser(mockUser);
 
+        // Mock the JWT user extraction and repository find/save operations
+        when(jwtUtil.extractUserId(token)).thenReturn(userId);
+        when(todoRepository.findById(id)).thenReturn(Optional.of(existingTodo));
+
+        // Update the existingTodo values as per the update
+        existingTodo.setTask(todoDTO.getTask());
+        existingTodo.setStatus(todoDTO.getStatus());
+        existingTodo.setPriority(todoDTO.getPriority());
+        existingTodo.setDeadlineDate(todoDTO.getDeadlineDate());
+
+        when(todoRepository.save(existingTodo)).thenReturn(existingTodo);
+        when(modelMapper.map(existingTodo, TodoDTO.class)).thenReturn(todoDTO);
+
+        // Run the update method
+        TodoDTO result = todoService.updateTodo(id, todoDTO, token);
+
+        // Assertions to verify the updated values
+        assertNotNull(result);
         assertEquals("Updated Task", result.getTask());
         assertEquals("completed", result.getStatus());
-        assertEquals(LocalDate.now().plusDays(2), result.getDeadlineDate());
         assertEquals("P2", result.getPriority());
+        assertEquals(todoDTO.getDeadlineDate(), result.getDeadlineDate());
+
     }
 
     @Test
     public void testGetTodos() {
-        Todo todo1 = new Todo(1L, "Task 1", "pending", LocalDate.now().plusDays(1), "P1");
-        Todo todo2 = new Todo(2L, "Task 2", "completed", LocalDate.now().plusDays(2), "P2");
+
+        String token = "valid-jwt-token";
+        Long userId = 123L;
+        String keyword = "Task"; // Example keyword
+        String status = "pending"; // Example status
+        String sortBy = "task"; // Field to sort by
+        String sortDirection = "asc"; // Sorting direction
+        int page = 0; // Page number
+        int size = 2; // Page size
+
+        // Create Pageable object
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy));
+
+        // Mock the User object
+        User mockUser = Mockito.mock(User.class);
+        when(mockUser.getId()).thenReturn(userId);
+
+        // Create Todo entities
+        Todo todo1 = new Todo(1L, "Task 1", "pending", LocalDate.now().plusDays(1), "P1", mockUser);
+        Todo todo2 = new Todo(2L, "Task 2", "pending", LocalDate.now().plusDays(2), "P2", mockUser);
         List<Todo> todos = Arrays.asList(todo1, todo2);
-        // Provide a Pageable object and total elements count
-        Page<Todo> page = new PageImpl<>(todos, PageRequest.of(0, 10), todos.size());
 
-        when(todoRepository.findAll(any(Pageable.class))).thenReturn(page);
+        // Mock the JWT user extraction and repository find operation
+        when(jwtUtil.extractUserId(token)).thenReturn(userId);
+        when(todoRepository.findByUserIdAndTaskContainingIgnoreCase(userId, keyword, pageable)).thenReturn(new PageImpl<>(todos));
 
-        // When
-        Page<TodoDTO> result = todoService.getTodos(null, null, null, null, 0, 10);
+        // Execute the getTodos method
+        Page<TodoDTO> result = todoService.getTodos(keyword, status, sortBy, sortDirection, page, size, token);
 
-        // Then
+        // Verify that the result contains the expected number of todos
         assertNotNull(result);
-        assertNotNull(result.getContent());
-        assertEquals(2, result.getTotalElements());
+        assertEquals(2, result.getContent().size());
+        assertEquals("Task 1", result.getContent().get(0).getTask());
+        assertEquals("Task 2", result.getContent().get(1).getTask());
 
     }
 
     @Test
     public void testDeleteTodo() {
+
         Long id = 1L;
-        when(todoRepository.existsById(id)).thenReturn(true);
+        String token = "valid-jwt-token";
+        Long userId = 123L;
 
-        String response = todoService.deleteTodo(id);
+        // Mocking the User object
+        User mockUser = Mockito.mock(User.class);
+        when(mockUser.getId()).thenReturn(userId);
 
-        assertEquals("Todo with id 1 was successfully deleted.", response);
-        verify(todoRepository, times(1)).deleteById(id);
+        Todo existingTodo = new Todo();
+        existingTodo.setId(id);
+        existingTodo.setUser(mockUser);
+
+        // Mock dependencies
+        when(jwtUtil.extractUserId(token)).thenReturn(userId);
+        when(todoRepository.findById(id)).thenReturn(Optional.of(existingTodo));
+
+        // Execute the delete method
+        todoService.deleteTodo(id, token);
+
+        // Verify that deleteById was called with the correct ID
+        verify(todoRepository).deleteById(id);
+
     }
 
 }

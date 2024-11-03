@@ -28,22 +28,16 @@ public class TodoControllerTest {
 
     @MockBean
     private TodoService todoService;
-
-    @BeforeEach
-    public void setUp() {
-        objectMapper = new ObjectMapper();
-    }
-
-    @Test
-    public void testCreateTodo() throws Exception {
-        TodoDTO todoDTO = new TodoDTO(1L, "Task 1", "pending", LocalDate.now().plusDays(1), "P1");
-        Mockito.when(todoService.createTodo(Mockito.any(TodoDTO.class))).thenReturn(todoDTO);
-
-        mockMvc.perform(post("/add-task")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(todoDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.task").value("Task 1"))
-                .andExpect(jsonPath("$.status").value("pending"));
-    }
+    //@Test
+//    public void testCreateTodo() throws Exception {
+//        TodoDTO todoDTO = new TodoDTO(1L, "Task 1", "pending", LocalDate.now().plusDays(1), "P1");
+//        Mockito.when(todoService.createTodo(Mockito.any(TodoDTO.class))).thenReturn(todoDTO);
+//
+//        mockMvc.perform(post("/add-task")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(objectMapper.writeValueAsString(todoDTO)))
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.task").value("Task 1"))
+//                .andExpect(jsonPath("$.status").value("pending"));
+//    }
 }

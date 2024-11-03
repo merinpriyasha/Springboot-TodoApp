@@ -10,9 +10,11 @@ import org.springframework.stereotype.Repository;
 public interface TodoRepository extends JpaRepository<Todo, Long> {
 
     //search for todo items based on keywords
-    Page<Todo> findByTaskContainingIgnoreCase(String keyword, Pageable pageable);
+    Page<Todo> findByUserIdAndTaskContainingIgnoreCase(Long userId, String keyword, Pageable pageable);
 
     //find todos by completion status
-    Page<Todo> findByStatus(String status, Pageable pageable);
+    Page<Todo> findByUserIdAndStatus(Long userId, String status, Pageable pageable);
+
+    Page<Todo> findByUserId(Long userId, Pageable pageable);
 
 }

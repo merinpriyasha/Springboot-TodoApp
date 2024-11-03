@@ -43,4 +43,8 @@ public class Todo {
     @Column(name = "priority", nullable = false)
     private String priority;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id",referencedColumnName = "id", nullable = false)
+    private User user; // Establishing relationship with User
+
 }
